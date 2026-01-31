@@ -17,12 +17,12 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "https://api.yppp.net/pc.php", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+		src: "https://tu.ltyuanfang.cn/api/fengjing.php", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 		position: "center", // Equivalent to object-position, only supports 'top', 'center', 'bottom'. 'center' by default
 		credit: {
 			enable: true, // Display the credit text of the banner image
-			text: "夜轻", // Credit text to be displayed
-			url: "https://blog.yeqing.net/acg-api/", // (Optional) URL link to the original artwork or artist's page
+			text: "远方", // Credit text to be displayed
+			url: "https://api.ltyuanfang.cn/", // (Optional) URL link to the original artwork or artist's page
 		},
 	},
 	toc: {
