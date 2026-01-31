@@ -1,5 +1,4 @@
 ---
-
 import { profileConfig } from "../config";
 import { url } from "../utils/url-utils";
 
@@ -18,4 +17,20 @@ const currentYear = new Date().getFullYear();
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
     </div>
+    
+    <!-- 新增 Vercount 统计模块（不改动原有内容） -->
+    <div class="site-stats mt-4">
+        总访问量：<span id="vercount_value_site_pv">Loading...</span> ·
+        总访客数：<span id="vercount_value_site_uv">Loading...</span>
+    </div>
 </div>
+
+<style>
+/* Vercount 统计样式（适配原有主题风格） */
+.site-stats {
+  @apply text-sm text-black/60 dark:text-white/60 flex items-center gap-2;
+}
+.site-stats span {
+  @apply font-medium text-[var(--primary)];
+}
+</style>
