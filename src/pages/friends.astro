@@ -10,32 +10,35 @@ const friends = Object.values(
 		import: "default",
 	}),
 );
+
+// 把友链信息定义在脚本区（--- 内），避免模板解析冲突
+const friendInfoExample = {
+    "name": "Qgxs&Blog",
+    "avatar": "https://s41.ax1x.com/2026/01/31/pZhVLLD.jpg",
+    "description": "放松心情，漫游四处，处处美景。",
+    "url": "https://blog.20210701.xyz/"
+};
 ---
 
 <MainGridLayout title="友链">
     <div class="card-base p-6 md:p-8">
         <div class="flex items-center gap-2 mb-6">
             <div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70">
-                <Icon name="material-symbols:diversity-3" class="text-[1.5rem]">
+                <Icon name="material-symbols:diversity-3" class="text-[1.5rem]" />
             </div>
             <h1 class="text-2xl font-bold text-black dark:text-white">友链</h1>
         </div>
 
-        <!-- 申请友链（已替换为指定文字和信息格式） -->
+        <!-- 申请友链（已替换为指定文字） -->
         <p class="text-sm text-black/60 dark:text-white/60 mb-4">
             如果你也想加入友链名单，请给我发送邮箱！crqgxs@qq.com 或 1044192982@qq.com
         </p>
-        <!-- 补充友链信息格式要求 -->
+        <!-- 补充友链信息格式要求（修复语法冲突） -->
         <p class="text-sm text-black/60 dark:text-white/60 mb-6">
             邮件中请包含以下友链信息（参考我的信息格式）：
         </p>
         <pre class="text-xs bg-black/5 dark:bg-white/5 p-4 rounded-lg mb-6 overflow-x-auto">
-{
-    "name": "Qgxs&Blog",
-    "avatar": "https://s41.ax1x.com/2026/01/31/pZhVLLD.jpg",
-    "description": "放松心情，漫游四处，处处美景。",
-    "url": "https://blog.20210701.xyz/"
-}
+{JSON.stringify(friendInfoExample, null, 4)}
         </pre>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {friends.map((friend) => (
@@ -50,6 +53,7 @@ const friends = Object.values(
                 </a>
             ))}
         </div>
+    </div>
 </MainGridLayout>
 
 <style>
@@ -75,7 +79,7 @@ const friends = Object.values(
     }
     
     .friend-card:hover .text-sm {
-    @apply text-gray-700 dark:text-white;
+        @apply text-gray-700 dark:text-white;
     }
 
     .friend-card .font-bold,
