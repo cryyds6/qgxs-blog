@@ -69,7 +69,7 @@ export const profileConfig: ProfileConfig = {
         },
         {
             name: 'help',
-            icon: 'fa6-brands:space-awesome,
+            icon: 'fa6-brands:space-awesome',
             url: 'https://www.20210701.xyz',
         },
 	],
