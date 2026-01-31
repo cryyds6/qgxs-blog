@@ -65,7 +65,7 @@ export const profileConfig: ProfileConfig = {
         {
             name: 'Email',
             icon: 'fa6-solid:envelope',
-            url: '1044192982@qq.com',
+            url: '/about',
         },
 	],
 };
@@ -73,7 +73,7 @@ export const profileConfig: ProfileConfig = {
 export const licenseConfig: LicenseConfig = {
 	enable: true,
 	name: "CC BY-NC-SA 4.0",
-	url: "/about",
+	url: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
 };
 
 export const expressiveCodeConfig: ExpressiveCodeConfig = {
