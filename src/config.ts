@@ -49,6 +49,11 @@ export const navBarConfig: NavBarConfig = {
 			url: "/friends", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
+				{
+			name: "监控",
+			url: "https://qgxsuptime.zeabur.app/status/qgxs", // Internal links should not include the base path, as it is automatically added
+			external: true, // Show an external link icon and will open in a new tab
+		},
 	],
 };
 
