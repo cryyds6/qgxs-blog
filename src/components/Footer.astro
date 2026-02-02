@@ -70,7 +70,7 @@ const currentYear = new Date().getFullYear();
                 const backupKey = 'fuwari_visit_backup';
                 let backupCount = localStorage.getItem(backupKey);
                 if (!backupCount) {
-                    backupCount = '1000'; // 默认起始值
+                    backupCount = '8888'; // 默认起始值
                 } else {
                     backupCount = (parseInt(backupCount) + 1).toString();
                 }
