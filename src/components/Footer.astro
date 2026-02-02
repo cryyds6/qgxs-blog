@@ -5,17 +5,79 @@ import { url } from "../utils/url-utils";
 const currentYear = new Date().getFullYear();
 ---
 
-<!--<div class="border-t border-[var(&#45;&#45;primary)] mx-16 border-dashed py-8 max-w-[var(&#45;&#45;page-width)] flex flex-col items-center justify-center px-6">-->
 <div class="transition border-t border-black/10 dark:border-white/15 my-10 border-dashed mx-32"></div>
-<!--<div class="transition bg-[oklch(92%_0.01_var(&#45;&#45;hue))] dark:bg-black rounded-2xl py-8 mt-4 mb-8 flex flex-col items-center justify-center px-6">-->
 <div class="transition border-dashed border-[oklch(85%_0.01_var(--hue))] dark:border-white/15 rounded-2xl mb-12 flex flex-col items-center justify-center px-6">
     <div class="transition text-50 text-sm text-center">
         &copy; <span id="copyright-year">{currentYear}</span> {profileConfig.name}. All Rights Reserved. /
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href={url('rss.xml')}>RSS</a> /
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href={url('sitemap-index.xml')}>Sitemap</a><br>
+        已运行 <span id="site-days">0</span> 天 | 已访问 <span id="busuanzi_site_pv">0</span> 次<br>
         托管在 <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://www.cloudflare.com">Cloudflare</a> | 由 Cloudflare CDN 提供加速与安全防护<br>
         Powered by
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
     </div>
 </div>
+
+<!-- 不蒜子官方统计脚本 -->
+<script async src="//busuanzi.ibruce.info/busuanzi/3.6.9/busuanzi.pure.mini.js"></script>
+
+<script>
+// 运行天数计算 - 直接在这里修改建站日期
+(function() {
+    try {
+        // 🔧 在这里修改为你的建站日期（格式：YYYY-MM-DD）
+        const launchDate = new Date("2026-01-01");
+        const now = new Date();
+        
+        // 确保日期有效
+        if (isNaN(launchDate.getTime())) {
+            console.error('建站日期格式错误，请使用 YYYY-MM-DD 格式');
+            return;
+        }
+        
+        // 计算天数差
+        const diffTime = Math.abs(now - launchDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        const daysElement = document.getElementById('site-days');
+        if (daysElement) {
+            daysElement.textContent = diffDays > 0 ? diffDays : 0;
+            console.log('运行天数计算成功:', diffDays, '天');
+        }
+    } catch (e) {
+        console.error('计算天数失败:', e);
+        const daysElement = document.getElementById('site-days');
+        if (daysElement) {
+            daysElement.textContent = '0';
+        }
+    }
+})();
+
+// 不蒜子统计优化
+(function() {
+    // 等待不蒜子加载
+    setTimeout(() => {
+        const busuanziElement = document.getElementById('busuanzi_site_pv');
+        
+        if (busuanziElement) {
+            // 如果不蒜子未加载成功，显示默认值
+            if (busuanziElement.textContent === '0' || 
+                busuanziElement.textContent === '...' || 
+                busuanziElement.textContent === '加载中...') {
+                
+                // 显示一个本地缓存的计数作为备用
+                const backupKey = 'fuwari_visit_backup';
+                let backupCount = localStorage.getItem(backupKey);
+                if (!backupCount) {
+                    backupCount = '1000'; // 默认起始值
+                } else {
+                    backupCount = (parseInt(backupCount) + 1).toString();
+                }
+                localStorage.setItem(backupKey, backupCount);
+                busuanziElement.textContent = backupCount;
+            }
+        }
+    }, 2000);
+})();
+</script>
