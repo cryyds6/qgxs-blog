@@ -1,6 +1,6 @@
 ---
 title: Fuwari静态博客搭建指南
-published: 2025-01-31
+published: 2025-02-01
 description: 复刻同款Fuwari静态博客
 tags: ["分享","博客搭建"]
 category: qgxs

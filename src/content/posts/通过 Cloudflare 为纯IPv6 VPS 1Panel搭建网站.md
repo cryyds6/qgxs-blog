@@ -1,6 +1,6 @@
 ---
 title: 通过 Cloudflare 为纯IPv6 VPS 1Panel搭建网站
-published: 2025-01-31
+published: 2025-02-02
 description: 尽量使用Ubuntu-22.04以上Debian11及以上，以防在纯IPV6访问面板出现问题。
 tags: ["分享"]
 category: qgxs
