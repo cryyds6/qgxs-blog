@@ -113,4 +113,6 @@ pnpm add sharp
 
 ✅ 后续更新：只需在本地用Obsidian编写Markdown文章（保存到 src/content/posts 文件夹），然后通过Git推送到GitHub仓库，Cloudflare会自动检测更改并重新部署，无需手动操作！
 
+ 本地预览，然后发布到Github
+当你认为你的文章已经写得差不多时，想要看看效果？请到项目根目录执行：pnpm dev，稍等片刻，你就可以本地预览你的博客啦http://localhost:4321/
 
