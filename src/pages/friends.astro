@@ -34,12 +34,20 @@ const friendInfoExample = {
             如果你也想加入友链名单，请给我发送邮箱！crqgxs@qq.com 或 1044192982@qq.com
         </p>
         <!-- 补充友链信息格式要求（修复语法冲突） -->
-        <p class="text-sm text-black/60 dark:text-white/60 mb-6">
+        <p class="text-sm text-black/60 dark:text-white/60 mb-4">
             邮件中请包含以下友链信息（参考我的信息格式）：
         </p>
-        <pre class="text-xs bg-black/5 dark:bg-white/5 p-4 rounded-lg mb-6 overflow-x-auto">
+        <div class="relative mb-6">
+            <pre class="text-xs bg-black/5 dark:bg-white/5 p-4 rounded-lg overflow-x-auto border border-black/10 dark:border-white/10">
 {JSON.stringify(friendInfoExample, null, 4)}
-        </pre>
+            </pre>
+            <button 
+                id="copyButton"
+                class="absolute top-2 right-2 px-2 py-1 text-xs bg-white/80 dark:bg-black/80 backdrop-blur-sm rounded border border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                type="button">
+                复制代码
+            </button>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {friends.map((friend) => (
                 <a href={friend.url} target="_blank" class="friend-card">
@@ -89,3 +97,34 @@ const friendInfoExample = {
         transition-duration: 0.15s;
     }
 </style>
+
+<script is:inline>
+// 复制示例代码到剪贴板
+document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copyButton');
+    if (!copyButton) return;
+    
+    const exampleCode = JSON.stringify({
+        "name": "Qgxs&Blog",
+        "avatar": "https://s41.ax1x.com/2026/01/31/pZhVLLD.jpg",
+        "description": "放松心情，漫游四处，处处美景。",
+        "url": "https://blog.20210701.xyz/"
+    }, null, 4);
+    
+    copyButton.addEventListener('click', function() {
+        navigator.clipboard.writeText(exampleCode).then(() => {
+            const originalText = this.textContent;
+            this.textContent = '已复制！';
+            this.classList.add('text-green-600', 'dark:text-green-400');
+            
+            setTimeout(() => {
+                this.textContent = originalText;
+                this.classList.remove('text-green-600', 'dark:text-green-400');
+            }, 2000);
+        }).catch(err => {
+            console.error('复制失败:', err);
+            alert('复制失败，请手动复制代码');
+        });
+    });
+});
+</script>
