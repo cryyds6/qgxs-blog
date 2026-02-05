@@ -1,6 +1,6 @@
 ---
 title: 使用AI提示词，让AI快速修改符合规范的文章
-published: 2024-05-31
+published: 2025-02-05
 description: 介绍如何利用定制的AI提示词，快速将文章草稿处理成符合Fuwari Astro博客规范的Markdown文档。
 tags: ["技术", "效率", "AI", "博客"]
 category: qgxs
