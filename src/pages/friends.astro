@@ -152,7 +152,7 @@ function copyEmail(email) {
         }, 2000);
     }).catch(err => {
         console.error('复制失败:', err);
-        alert('复制失败，请手动复制邮箱地址');
+        // 移除 alert 弹窗
     });
 }
 
@@ -181,7 +181,7 @@ function copyExampleCode() {
         }, 2000);
     }).catch(err => {
         console.error('复制失败:', err);
-        alert('复制失败，请手动复制代码');
+        // 移除 alert 弹窗
     });
 }
 </script>
