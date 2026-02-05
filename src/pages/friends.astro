@@ -22,6 +22,7 @@ const friendInfoExample = {
 
 <MainGridLayout title="友链">
     <div class="card-base p-6 md:p-8">
+        <!-- 页面标题 -->
         <div class="flex items-center gap-2 mb-6">
             <div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70">
                 <Icon name="material-symbols:diversity-3" class="text-[1.5rem]" />
@@ -29,35 +30,64 @@ const friendInfoExample = {
             <h1 class="text-2xl font-bold text-black dark:text-white">友链</h1>
         </div>
 
-        <!-- 申请友链（已替换为指定文字） -->
-        <p class="text-sm text-black/60 dark:text-white/60 mb-4">
-            如果你也想加入友链名单，请给我发送邮箱！crqgxs@qq.com 或 1044192982@qq.com
-        </p>
-        <!-- 补充友链信息格式要求（修复语法冲突） -->
-        <p class="text-sm text-black/60 dark:text-white/60 mb-4">
-            邮件中请包含以下友链信息（参考我的信息格式）：
-        </p>
-        <div class="relative mb-6">
-            <pre class="text-xs bg-black/5 dark:bg-white/5 p-4 rounded-lg overflow-x-auto border border-black/10 dark:border-white/10">
+        <!-- 申请友链说明 -->
+        <div class="mb-8 p-4 rounded-xl bg-gradient-to-br from-pink-50/80 to-rose-50/60 dark:from-pink-900/20 dark:to-rose-900/15 border border-pink-100/50 dark:border-pink-800/30 shadow-sm">
+            <h2 class="text-lg font-semibold text-black dark:text-white mb-2 flex items-center gap-2">
+                <Icon name="material-symbols:mail-outline" class="text-[1.2rem] text-pink-600 dark:text-pink-400" />
+                <span class="bg-gradient-to-r from-pink-600 to-rose-600 dark:from-pink-400 dark:to-rose-400 bg-clip-text text-transparent">
+                    申请友链
+                </span>
+            </h2>
+            <p class="text-sm text-black/70 dark:text-white/70 mb-3">
+                如果你也想加入友链名单，请给我发送邮件！
+            </p>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <div class="text-xs px-3 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-800/40 transition-colors select-all" onclick="copyEmail('crqgxs@qq.com')">
+                    📧 crqgxs@qq.com
+                </div>
+                <div class="text-xs px-3 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full cursor-pointer hover:bg-pink-200 dark:hover:bg-pink-800/40 transition-colors select-all" onclick="copyEmail('1044192982@qq.com')">
+                    📧 1044192982@qq.com
+                </div>
+            </div>
+            <p class="text-sm text-black/70 dark:text-white/70 mb-2">
+                邮件中请包含以下友链信息格式（请参考我的信息）：
+            </p>
+            
+            <!-- 可复制的代码块 -->
+            <div class="relative">
+                <pre class="text-xs bg-white/80 dark:bg-gray-800/60 p-4 rounded-lg overflow-x-auto border border-pink-200/50 dark:border-pink-800/40 font-mono cursor-pointer select-all" onclick="copyExampleCode()">
 {JSON.stringify(friendInfoExample, null, 4)}
-            </pre>
-            <button 
-                id="copyButton"
-                class="absolute top-2 right-2 px-2 py-1 text-xs bg-white/80 dark:bg-black/80 backdrop-blur-sm rounded border border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                type="button">
-                复制代码
-            </button>
+                </pre>
+                <div class="absolute top-2 right-2 px-2 py-1 text-xs bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded border border-pink-200 dark:border-pink-800 text-pink-600 dark:text-pink-400 transition-colors shadow-sm pointer-events-none">
+                    点击复制
+                </div>
+            </div>
         </div>
+
+        <!-- 友情链接列表标题 -->
+        <div class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+                <Icon name="material-symbols:favorite" class="text-[1.5rem] text-pink-500 dark:text-pink-400" />
+                <h2 class="text-xl font-bold text-black dark:text-white">💕 友情链接列表</h2>
+            </div>
+            <p class="text-sm text-black/60 dark:text-white/60">
+                感谢以下朋友为本站提供的支持与帮助，排名不分先后
+            </p>
+        </div>
+
+        <!-- 友链展示 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {friends.map((friend) => (
-                <a href={friend.url} target="_blank" class="friend-card">
-                    <div class="flex items-center gap-2">
-                        <div class="relative w-5 h-5 rounded overflow-hidden" style={`--theme-hue: ${siteConfig.themeColor.hue}`}>
-                            <img src={friend.avatar} loading="lazy" class="w-full h-full object-cover transition-opacity duration-500" alt={`${friend.name}的头像`} />
+                <a href={friend.url} target="_blank" class="friend-card group">
+                    <div class="flex items-center gap-3">
+                        <div class="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-sm" style={`--theme-hue: ${siteConfig.themeColor.hue}`}>
+                            <img src={friend.avatar} loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" alt={`${friend.name}的头像`} />
                         </div>
-                        <div class="font-bold text-black dark:text-white">{friend.name}</div>
+                        <div>
+                            <div class="font-bold text-black dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">{friend.name}</div>
+                        </div>
                     </div>
-                    <div class="text-sm text-black/50 dark:text-white/50">{friend.description}</div>
+                    <div class="text-sm text-black/60 dark:text-white/60 mt-2 pl-13">{friend.description}</div>
                 </a>
             ))}
         </div>
@@ -66,44 +96,68 @@ const friendInfoExample = {
 
 <style>
     .friend-card {
-        @apply flex flex-col gap-1 p-4 rounded-lg bg-[var(--card-bg)] border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 hover:bg-black/5 dark:hover:bg-white/5;
-        transition-property: background-color, border-color, scale;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 0.15s;
+        @apply flex flex-col p-4 rounded-xl bg-gradient-to-br from-white/60 to-white/40 dark:from-gray-800/30 dark:to-gray-800/10 border border-black/5 dark:border-white/10 transition-all duration-300;
+        backdrop-filter: blur(8px);
         transform: translateZ(0);
     }
     
-    .friend-card:active {
-        scale: .98;
-        background-color: var(--btn-regular-bg-active);
-    }
-    
     .friend-card:hover {
-        background-color: var(--btn-regular-bg-hover);
+        border-color: rgba(236, 72, 153, 0.3);
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(236, 72, 153, 0.02) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     }
     
-    .friend-card:hover .font-bold {
-        color: var(--btn-content);
+    .friend-card:active {
+        transform: translateY(0);
     }
     
-    .friend-card:hover .text-sm {
-        @apply text-gray-700 dark:text-white;
+    .pl-13 {
+        padding-left: 3.25rem;
     }
-
-    .friend-card .font-bold,
-    .friend-card .text-sm {
-        transition-property: color;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 0.15s;
+    
+    @media (max-width: 768px) {
+        .pl-13 {
+            padding-left: 0;
+            margin-top: 0.75rem;
+        }
+        .friend-card {
+            @apply p-3;
+        }
+    }
+    
+    .select-all {
+        user-select: all;
+        -webkit-user-select: all;
+        -moz-user-select: all;
+        -ms-user-select: all;
     }
 </style>
 
 <script is:inline>
+// 复制邮箱地址
+function copyEmail(email) {
+    navigator.clipboard.writeText(email).then(() => {
+        const element = event.target;
+        const originalText = element.textContent;
+        
+        element.textContent = '✅ 已复制！';
+        element.classList.remove('bg-pink-100', 'dark:bg-pink-900/30', 'text-pink-700', 'dark:text-pink-300');
+        element.classList.add('bg-green-100', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-300');
+        
+        setTimeout(() => {
+            element.textContent = originalText;
+            element.classList.remove('bg-green-100', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-300');
+            element.classList.add('bg-pink-100', 'dark:bg-pink-900/30', 'text-pink-700', 'dark:text-pink-300');
+        }, 2000);
+    }).catch(err => {
+        console.error('复制失败:', err);
+        alert('复制失败，请手动复制邮箱地址');
+    });
+}
+
 // 复制示例代码到剪贴板
-document.addEventListener('DOMContentLoaded', function() {
-    const copyButton = document.getElementById('copyButton');
-    if (!copyButton) return;
-    
+function copyExampleCode() {
     const exampleCode = JSON.stringify({
         "name": "Qgxs&Blog",
         "avatar": "https://s41.ax1x.com/2026/01/31/pZhVLLD.jpg",
@@ -111,20 +165,23 @@ document.addEventListener('DOMContentLoaded', function() {
         "url": "https://blog.20210701.xyz/"
     }, null, 4);
     
-    copyButton.addEventListener('click', function() {
-        navigator.clipboard.writeText(exampleCode).then(() => {
-            const originalText = this.textContent;
-            this.textContent = '已复制！';
-            this.classList.add('text-green-600', 'dark:text-green-400');
-            
-            setTimeout(() => {
-                this.textContent = originalText;
-                this.classList.remove('text-green-600', 'dark:text-green-400');
-            }, 2000);
-        }).catch(err => {
-            console.error('复制失败:', err);
-            alert('复制失败，请手动复制代码');
-        });
+    navigator.clipboard.writeText(exampleCode).then(() => {
+        const preElement = event.target.closest('pre');
+        const buttonElement = preElement.nextElementSibling;
+        const originalText = buttonElement.textContent;
+        
+        buttonElement.textContent = '✅ 已复制！';
+        buttonElement.classList.remove('text-pink-600', 'dark:text-pink-400');
+        buttonElement.classList.add('text-green-600', 'dark:text-green-400', 'bg-green-50', 'dark:bg-green-900/20');
+        
+        setTimeout(() => {
+            buttonElement.textContent = originalText;
+            buttonElement.classList.remove('text-green-600', 'dark:text-green-400', 'bg-green-50', 'dark:bg-green-900/20');
+            buttonElement.classList.add('text-pink-600', 'dark:text-pink-400');
+        }, 2000);
+    }).catch(err => {
+        console.error('复制失败:', err);
+        alert('复制失败，请手动复制代码');
     });
-});
+}
 </script>
