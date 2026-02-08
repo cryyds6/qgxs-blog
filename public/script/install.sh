@@ -21,8 +21,13 @@ else
     NC=''
 fi
 
-# Rootless 路径（兼容不同用户目录）
-INSTALL_BASE_DIR="${HOME}/Napcat"
+# Root/普通用户路径适配（核心修改：支持root路径）
+if [[ $EUID -eq 0 ]]; then
+    DEFAULT_INSTALL_BASE_DIR="/opt/Napcat"  # root用户默认路径
+else
+    DEFAULT_INSTALL_BASE_DIR="${HOME}/Napcat"  # 普通用户默认路径
+fi
+INSTALL_BASE_DIR="${DEFAULT_INSTALL_BASE_DIR}"
 QQ_BASE_PATH="${INSTALL_BASE_DIR}/opt/QQ"
 TARGET_FOLDER="${QQ_BASE_PATH}/resources/app/app_launcher"
 QQ_EXECUTABLE="${QQ_BASE_PATH}/qq"
@@ -34,15 +39,18 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     date_cmd="gdate"  # 需要 brew install coreutils
 fi
 
+# 全局变量：是否允许root安装
+allow_root_install="n"
+
 # ======================== 核心工具函数 ========================
 function logo() {
     echo -e " ${MAGENTA}┌${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}${RED}─┐${NC}"
     echo -e " ${MAGENTA}│${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA} ${RED}│${NC}"
     echo -e " ${RED}│${YELLOW}██${GREEN}█╗${CYAN}  ${BLUE} █${MAGENTA}█╗${RED}  ${YELLOW}  ${GREEN} █${CYAN}██${BLUE}██${MAGENTA}╗ ${RED}  ${YELLOW}  ${GREEN}██${CYAN}██${BLUE}██${MAGENTA}╗ ${RED}  ${YELLOW}  ${GREEN} █${CYAN}██${BLUE}██${MAGENTA}█╗${RED}  ${YELLOW}  ${GREEN} █${CYAN}██${BLUE}██${MAGENTA}╗ ${RED}  ${YELLOW}  ${GREEN}██${CYAN}██${BLUE}██${MAGENTA}██${RED}╗${YELLOW}│${NC}"
     echo -e " ${YELLOW}│${GREEN}██${CYAN}██${BLUE}╗ ${MAGENTA} █${RED}█║${YELLOW}  ${GREEN}  ${CYAN}██${BLUE}╔═${MAGENTA}═█${RED}█╗${YELLOW}  ${GREEN}  ${CYAN}██${BLUE}╔═${MAGENTA}═█${RED}█╗${YELLOW}  ${GREEN}  ${CYAN}██${BLUE}╔═${MAGENTA}══${RED}═╝${YELLOW}  ${GREEN}  ${CYAN}██${BLUE}╔═${MAGENTA}═█${RED}█╗${YELLOW}  ${GREEN}  ${CYAN}╚═${BLUE}═█${MAGENTA}█╔${RED}══${YELLOW}╝${YELLOW}│${NC}"
-    echo -e " ${GREEN}│${CYAN}██${BLUE}╔█${MAGENTA}█╗${RED} █${YELLOW}█║${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}██${RED}██${YELLOW}█║${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}██${RED}██${YELLOW}╔╝${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}║ ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}██${RED}██${YELLOW}██${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}  ${RED} █${YELLOW}█║${GREEN}  ${GREEN}│${NC}"
-    echo -e " ${CYAN}│${BLUE}██${MAGENTA}║╚${RED}██${YELLOW}╗█${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}██${RED}╔═${YELLOW}═█${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}██${RED}╔═${YELLOW}══${GREEN}╝ ${CYAN}  ${BLUE}  ${MAGENTA}██${RED}║ ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}██${RED}╔═${YELLOW}═█${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}  ${RED} █${YELLOW}█║${GREEN}  ${CYAN} ${CYAN}│${NC}"
-    echo -e " ${BLUE}│${MAGENTA}██${RED}║ ${YELLOW}╚█${GREEN}██${CYAN}█║${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}║ ${GREEN} █${CYAN}█║${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}║ ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}╚█${YELLOW}██${GREEN}██${CYAN}█╗${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}║ ${GREEN} █${CYAN}█║${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW} █${GREEN}█║${CYAN}  ${BLUE} ${BLUE}│${NC}"
+    echo -e " ${GREEN}│${CYAN}██${BLUE}╔█${MAGENTA}█╗${RED} █${YELLOW}█║${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}██${RED}██${YELLOW}█║${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}██${RED}██${YELLOW}╔╝${GREEN}  ${CYAN}  ${BLUE}██${MAGENTA}║ ${RED}  ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}██${GREEN}██${CYAN}█║${BLUE}  ${MAGENTA}  ${RED} █${YELLOW}█║${GREEN}  ${GREEN}│${NC}"
+    echo -e " ${CYAN}│${BLUE}██${MAGENTA}║╚${RED}██${YELLOW}╗█${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}██${RED}╔═${YELLOW}═█${GREEN}█║${CYAN}  ${BLUE}  ${MAGENTA}██${RED}╔═${YELLOW}══${GREEN}╝ ${CYAN}  ${BLUE}  ${MAGENTA}██${RED}║ ${YELLOW}  ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}╔═${GREEN}═█${CYAN}█║${BLUE}  ${MAGENTA}  ${RED} █${YELLOW}█║${GREEN}  ${CYAN} ${CYAN}│${NC}"
+    echo -e " ${BLUE}│${MAGENTA}██${RED}║ ${YELLOW}╚█${GREEN}██${CYAN}█║${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}║ ${GREEN} █${CYAN}█║${BLUE}  ${MAGENTA}  ${RED}██${YELLOW}║ ${GREEN}  ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW} ╚${GREEN}██${CYAN}██${BLUE}██${MAGENTA}█╗${RED}  ${YELLOW}  ${GREEN}██${CYAN}║ ${BLUE} █${MAGENTA}█║${RED}  ${YELLOW}  ${GREEN}  ${CYAN} █${BLUE}█║${MAGENTA}  ${BLUE} ${BLUE}│${NC}"
     echo -e " ${MAGENTA}│${RED}╚═${YELLOW}╝ ${GREEN} ╚${CYAN}══${BLUE}═╝${MAGENTA}  ${RED}  ${YELLOW}╚═${GREEN}╝ ${CYAN} ╚${BLUE}═╝${MAGENTA}  ${RED}  ${YELLOW}╚═${GREEN}╝ ${CYAN}  ${BLUE}  ${MAGENTA}  ${RED}  ${YELLOW} ╚${GREEN}══${CYAN}══${BLUE}═╝${MAGENTA}  ${RED}  ${YELLOW}╚═${GREEN}╝ ${CYAN} ╚${BLUE}═╝${MAGENTA}  ${RED}  ${YELLOW}  ${GREEN} ╚${CYAN}═╝${BLUE}  ${MAGENTA} ${MAGENTA}│${NC}"
     echo -e " ${RED}└${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}──${YELLOW}──${GREEN}──${CYAN}──${BLUE}──${MAGENTA}──${RED}${YELLOW}─┘${NC}"
     echo -e "                      ${BLUE}Powered by NapCat-Installer${NC}\n"
@@ -52,7 +60,7 @@ function log() {
     time=$(${date_cmd} +"%Y-%m-%d %H:%M:%S")
     message="[${time}]: $1 "
     case "$1" in
-    *"失败"* | *"错误"* | *"sudo不存在"* | *"当前用户不是root用户"* | *"无法连接"*)
+    *"失败"* | *"错误"* | *"sudo不存在"* | *"无法连接"*)
         echo -e "${RED}${message}${NC}"
         ;;
     *"成功"*)
@@ -80,7 +88,7 @@ function execute_command() {
     else
         local exit_code=$?
         if [ "${allow_fail}" = "true" ]; then
-            log "${YELLOW}${desc} (${cmd})失败(退出码:${exit_code})，但允许继续${NC}"
+            log "${YELLOW}${desc} (${cmd})失败(退出码:${exitcode})，但允许继续${NC}"
             return ${exit_code}
         else
             log "${desc} (${cmd})失败(退出码:${exit_code})"
@@ -94,7 +102,7 @@ function check_system_compatibility() {
     local os=$(uname -s)
     local arch=$(uname -m)
     
-    log "检测系统环境: OS=${os}, ARCH=${arch}"
+    log "检测系统环境: OS=${os}, ARCH=${arch}, EUID=${EUID}"
     
     # 兼容 macOS
     if [ "${os}" = "Darwin" ]; then
@@ -176,7 +184,7 @@ function network_test() {
         log "代理已关闭, 尝试直连 ${parm1}..."
         target_proxy=""
         if [ -n "${check_url}" ]; then
-            # 增加重试机制
+            # 增加重试机制 + 修复curl参数错误（核心：%{exitcode}）
             status_and_exit_code=$(curl -k --connect-timeout ${timeout} --max-time $((timeout * 2)) --retry 2 -o /dev/null -s -w "%{http_code}:%{exitcode}" "${check_url}")
             status=$(echo "${status_and_exit_code}" | cut -d: -f1)
             curl_exit_code=$(echo "${status_and_exit_code}" | cut -d: -f2)
@@ -194,6 +202,7 @@ function network_test() {
         # 先测试直连
         if [ -n "${check_url}" ]; then
             log "测速: 直连..."
+            # 修复curl参数错误：%{speed_download} 而非 speed_download
             local curl_output
             curl_output=$(curl -k -L --connect-timeout ${timeout} --max-time $((timeout * 3)) --retry 1 -o /dev/null -s -w "%{http_code}:%{exitcode}:%{speed_download}" "${check_url}")
             local status=$(echo "${curl_output}" | cut -d: -f1)
@@ -221,6 +230,7 @@ function network_test() {
 
             # 后台测速，避免串行耗时
             (
+                # 修复curl参数错误：%{xxx} 格式
                 local curl_output=$(curl -k -L --connect-timeout ${timeout} --max-time $((timeout * 3)) --retry 1 -o /dev/null -s -w "%{http_code}:%{exitcode}:%{speed_download}" "${test_target_url}")
                 local status=$(echo "${curl_output}" | cut -d: -f1)
                 local curl_exit_code=$(echo "${curl_output}" | cut -d: -f2)
@@ -285,7 +295,40 @@ function format_speed() {
     fi
 }
 
-# ======================== 原有函数优化（兼容+鲁棒性）========================
+# ======================== Root权限选择（核心新增）========================
+function choose_root_permission() {
+    log "===== 权限选择 ====="
+    if [[ $EUID -eq 0 ]]; then
+        # 当前已是root用户，询问是否确认用root安装
+        log "警告: 当前以ROOT用户运行，使用root安装可能导致权限问题！"
+        read -p "是否确认使用ROOT权限安装? (y/N): " confirm_root
+        if [[ "${confirm_root}" =~ ^[Yy]$ ]]; then
+            allow_root_install="y"
+            log "已确认使用ROOT权限安装，安装路径: ${INSTALL_BASE_DIR}"
+        else
+            log "请切换到普通用户后重新执行脚本！"
+            exit 1
+        fi
+    else
+        # 当前是普通用户，询问是否要切换到root安装
+        read -p "是否要切换到ROOT权限安装? (N/y): " switch_root
+        if [[ "${switch_root}" =~ ^[Yy]$ ]]; then
+            # 检查sudo是否可用
+            if ! command -v sudo &>/dev/null; then
+                log "错误: 系统未安装sudo，无法切换root权限！"
+                exit 1
+            fi
+            # 重新以root执行脚本
+            log "将切换到ROOT权限重新执行脚本..."
+            exec sudo bash "${0}" "$@"
+        else
+            allow_root_install="n"
+            log "将使用普通用户权限安装，安装路径: ${INSTALL_BASE_DIR}"
+        fi
+    fi
+}
+
+# ======================== 原有函数优化（兼容Root）========================
 function check_sudo() {
     if ! command -v sudo &>/dev/null; then
         log "sudo不存在, 尝试自动安装..."
@@ -401,13 +444,22 @@ function install_dependency() {
     log "依赖安装完成"
 }
 
-# ======================== 保留原有核心函数（仅修复bug）========================
+# 移除原有的root检查限制（核心修改）
+function check_root_for_shell_install() {
+    if [[ $EUID -eq 0 && "${allow_root_install}" != "y" ]]; then
+        log "警告: 不推荐使用root权限执行Shell安装"
+        echo -e "${YELLOW}如果是旧版本升级，请使用普通用户重新安装${NC}"
+    else
+        log "已确认使用root权限安装，跳过权限警告"
+    fi
+}
+
 function print_introduction() {
     echo -e "${BLUE}下面是 NapCat 安装脚本的功能简介！${NC}😋"
     echo -e "${BLUE}--${NC}"
     echo -e "${BLUE}接下来，您可以选择安装方式:${NC}"
     echo -e "  1. ${GREEN}Docker 安装${NC}: ${BLUE}通过容器运行 (需要 root 或 docker 用户组权限)。${NC}"
-    echo -e "  2. ${GREEN}本地安装 (Rootless)${NC}: ${BLUE}直接在本系统当前用户下安装，无需 root 权限。${NC}(${YELLOW}默认${NC})${NC}"
+    echo -e "  2. ${GREEN}本地安装 (支持Root/普通用户)${NC}: ${BLUE}直接在本系统安装，可选择Root/普通用户权限。${NC}(${YELLOW}默认${NC})${NC}"
     echo -e "  	 - ${GREEN}可视化安装${NC}: ${BLUE}通过交互式界面来引导你安装。${NC}"
     echo -e "  	 - ${GREEN}Shell 安装${NC}: ${BLUE}直接在当前Shell会话执行安装。${NC}(${YELLOW}默认${NC})${NC}"
     echo ""
@@ -481,10 +533,23 @@ function enable_dnf_repos_and_cache() {
 
 function uninstall_old_version() {
     log "检查旧版本安装..."
-    if [ -d "/opt/QQ/resources/app/app_launcher/napcat" ]; then
-        log "检测到旧版本, 准备卸载..."
-        
-        echo -e "${YELLOW}警告: 将卸载 'linuxqq' 并删除 '/opt/QQ' 目录${NC}"
+    # 兼容root/普通用户的旧版本路径
+    local old_paths=(
+        "/opt/QQ"
+        "${HOME}/Napcat/opt/QQ"
+        "/opt/Napcat/opt/QQ"
+    )
+    local old_path_found=""
+    for path in "${old_paths[@]}"; do
+        if [ -d "${path}/resources/app/app_launcher/napcat" ]; then
+            old_path_found="${path}"
+            break
+        fi
+    done
+
+    if [ -n "${old_path_found}" ]; then
+        log "检测到旧版本安装路径: ${old_path_found}"
+        log "警告: 将卸载 'linuxqq' 并删除旧版本目录"
         read -p "是否继续? (y/N): " confirm_delete
         
         if [[ ! "${confirm_delete}" =~ ^[Yy]$ ]]; then
@@ -499,36 +564,41 @@ function uninstall_old_version() {
             execute_command "sudo ${package_manager} remove -y linuxqq" "卸载旧版 linuxqq" true
         fi
 
-        if [ -d "/opt/QQ" ]; then
-            execute_command "sudo rm -rf /opt/QQ" "清理旧版QQ目录" true
-        fi
+        # 删除所有旧路径
+        for path in "${old_paths[@]}"; do
+            if [ -d "${path}" ]; then
+                execute_command "sudo rm -rf ${path}" "清理旧版QQ目录: ${path}" true
+            fi
+        done
         log "旧版本卸载完成。"
     else
         log "未检测到旧版本, 跳过卸载。"
     fi
 }
 
-function check_root_for_shell_install() {
-    if [[ $EUID -eq 0 ]]; then
-        log "警告: 不推荐使用root权限执行Shell安装"
-        echo -e "${YELLOW}如果是旧版本升级，请使用普通用户重新安装${NC}"
-    fi
-}
-
 function create_tmp_folder() {
-    if [ -d "./NapCat" ] && [ "$(ls -A ./NapCat)" ]; then
-        log "文件夹 ./NapCat 已存在且不为空，请重命名后重试"
+    # 兼容root/普通用户的临时目录权限
+    local tmp_dir="./NapCat"
+    if [ -d "${tmp_dir}" ] && [ "$(ls -A ${tmp_dir})" ]; then
+        log "文件夹 ${tmp_dir} 已存在且不为空，请重命名后重试"
         exit 1
     fi
-    mkdir -p ./NapCat
+    mkdir -p "${tmp_dir}"
+    # 确保当前用户有写入权限
+    chmod 755 "${tmp_dir}"
 }
 
 function clean() {
+    # 兼容root/普通用户的清理操作
     rm -rf ./NapCat || log "临时目录删除失败, 请手动删除 ./NapCat"
     rm -rf ./NapCat.Shell.zip || log "压缩包删除失败, 请手动删除"
     rm -f ./QQ.deb ./QQ.rpm
     if [ -d "${TARGET_FOLDER}/napcat.packet" ]; then
-        rm -rf "${TARGET_FOLDER}/napcat.packet"
+        if [[ $EUID -eq 0 ]]; then
+            rm -rf "${TARGET_FOLDER}/napcat.packet"
+        else
+            sudo rm -rf "${TARGET_FOLDER}/napcat.packet" || log "清理napcat.packet失败，请手动删除"
+        fi
     fi
 }
 
@@ -662,7 +732,7 @@ function check_linuxqq() {
 
 function install_linuxqq_rootless() {
     get_system_arch
-    log "以用户模式安装 LinuxQQ 到 ${INSTALL_BASE_DIR}..."
+    log "安装 LinuxQQ 到 ${INSTALL_BASE_DIR}..."
 
     local qq_download_url=""
     local qq_package_file=""
@@ -721,7 +791,13 @@ function update_linuxqq_config() {
     log "更新QQ配置..."
     local target_ver="${1}"
     local build_id="${target_ver##*-}"
-    local user_config_dir="$HOME/.config/QQ/versions"
+    # 兼容root/普通用户的配置路径
+    local user_config_dir
+    if [[ $EUID -eq 0 ]]; then
+        user_config_dir="/root/.config/QQ/versions"  # root用户配置路径
+    else
+        user_config_dir="${HOME}/.config/QQ/versions"  # 普通用户配置路径
+    fi
     local user_config_file="${user_config_dir}/config.json"
 
     if [ -d "${user_config_dir}" ]; then
@@ -757,7 +833,12 @@ function install_napcat() {
     }
     log "移动文件成功"
 
-    chmod -R +x "${TARGET_FOLDER}/napcat/"
+    # 兼容root/普通用户的权限设置
+    if [[ $EUID -eq 0 ]]; then
+        chmod -R 755 "${TARGET_FOLDER}/napcat/"
+    else
+        chmod -R +x "${TARGET_FOLDER}/napcat/"
+    fi
     log "修补文件..."
     echo "(async () => {await import('file:///${TARGET_FOLDER}/napcat/napcat.mjs');})();" > "${QQ_BASE_PATH}/resources/app/loadNapCat.js" || {
         log "loadNapCat.js写入失败"
@@ -976,16 +1057,25 @@ function docker_install() {
 }
 
 function show_main_info() {
-    log "\n- Shell (Rootless) 安装完成 -"
+    log "\n- Shell 安装完成 -"
     log ""
     log "${GREEN}安装位置:${NC} ${CYAN}${INSTALL_BASE_DIR}${NC}"
     log ""
-    log "${GREEN}启动 Napcat (无需 sudo):${NC}"
-    log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"
+    log "${GREEN}启动 Napcat:${NC}"
+    if [[ $EUID -eq 0 ]]; then
+        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"  # root用户启动命令
+    else
+        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"  # 普通用户启动命令
+    fi
     log ""
     log "${GREEN}后台运行:${NC}"
-    log "  启动: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox \"${NC}"
-    log "  带账号: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox  -q QQ号码\"${NC}"
+    if [[ $EUID -eq 0 ]]; then
+        log "  启动: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox \"${NC}"
+        log "  带账号: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox  -q QQ号码\"${NC}"
+    else
+        log "  启动: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox \"${NC}"
+        log "  带账号: ${CYAN}screen -dmS napcat bash -c \"xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox  -q QQ号码\"${NC}"
+    fi
     log "  附加会话: ${CYAN}screen -r napcat${NC} (Ctrl+A+D 分离)"
     log "  停止会话: ${CYAN}screen -S napcat -X quit${NC}"
     log ""
@@ -1028,7 +1118,7 @@ function main_tui() {
         choice=$(
             whiptail --title "Napcat Installer" \
                 --menu "\n欢迎使用Napcat安装脚本" 12 50 3 \
-                "1" "Shell 安装 (Rootless)" \
+                "1" "Shell 安装 (支持Root/普通用户)" \
                 "2" "Docker 安装" \
                 "3" "退出" 3>&1 1>&2 2>&3
         )
@@ -1130,8 +1220,11 @@ done
 clear
 logo
 print_introduction
-check_system_compatibility  # 新增系统兼容检查
+check_system_compatibility  # 系统兼容检查
 check_sudo
+
+# 核心新增：权限选择
+choose_root_permission
 
 if [ "${use_tui}" = "y" ]; then
     main_tui
@@ -1179,7 +1272,7 @@ if [ "${use_docker}" = "y" ]; then
     fi
     exit ${exit_status}
 elif [ "${use_docker}" = "n" ]; then
-    check_root_for_shell_install
+    check_root_for_shell_install  # 已修改为兼容root
     log "开始 Shell 安装..."
     uninstall_old_version
     install_dependency
