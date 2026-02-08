@@ -75,7 +75,7 @@ function log() {
     esac
 }
 
-# 增强版命令执行函数（修复curl exitcode参数）
+# 增强版命令执行函数
 function execute_command() {
     local cmd="$1"
     local desc="$2"
@@ -218,9 +218,8 @@ function network_test() {
                 test_target_url="${proxy_candidate}/"
             fi
 
-            # 后台测速
+            # 后台测速（核心修复curl参数）
             (
-                # 核心修复：curl -w "%{http_code}:%{exitcode}:%{speed_download}"
                 local curl_output=$(curl -k -L --connect-timeout ${timeout} --max-time $((timeout * 3)) --retry 1 -o /dev/null -s -w "%{http_code}:%{exitcode}:%{speed_download}" "${test_target_url}")
                 local status=$(echo "${curl_output}" | cut -d: -f1)
                 local curl_exit_code=$(echo "${curl_output}" | cut -d: -f2)
