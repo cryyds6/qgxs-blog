@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# ======================== 基础配置优化 ========================
+# ======================== 基础配置 ========================
 # 颜色常量（兼容无颜色终端）
 if [ -t 1 ]; then
     MAGENTA='\033[0;1;35;95m'
@@ -21,7 +21,7 @@ else
     NC=''
 fi
 
-# Root/普通用户路径适配（核心修改：支持root路径）
+# Root/普通用户路径适配
 if [[ $EUID -eq 0 ]]; then
     DEFAULT_INSTALL_BASE_DIR="/opt/Napcat"  # root用户默认路径
 else
@@ -75,7 +75,7 @@ function log() {
     esac
 }
 
-# 增强版命令执行函数（兼容非零退出码）
+# 增强版命令执行函数（修复curl exitcode参数）
 function execute_command() {
     local cmd="$1"
     local desc="$2"
@@ -88,7 +88,7 @@ function execute_command() {
     else
         local exit_code=$?
         if [ "${allow_fail}" = "true" ]; then
-            log "${YELLOW}${desc} (${cmd})失败(退出码:${exitcode})，但允许继续${NC}"
+            log "${YELLOW}${desc} (${cmd})失败(退出码:${exit_code})，但允许继续${NC}"
             return ${exit_code}
         else
             log "${desc} (${cmd})失败(退出码:${exit_code})"
@@ -124,7 +124,7 @@ function check_system_compatibility() {
     fi
 }
 
-# ======================== 代理优化（核心）========================
+# ======================== 代理优化（核心修复curl参数）========================
 function network_test() {
     local parm1=${1}
     local found=0
@@ -137,30 +137,22 @@ function network_test() {
     log "开始网络测试: ${parm1}..."
     log "命令行传入代理参数 (proxy_num_arg): '${proxy_num_arg}', 本次测试生效设置: '${current_proxy_setting}'"
 
-    # 新增大量国内可用代理（2026年有效）
+    # 国内可用代理列表
     if [ "${parm1}" == "Github" ]; then
         proxy_arr=(
-            "https://mirror.ghproxy.com"          # 稳定
-            "https://gh-proxy.com"               # 常用
-            "https://gh.api.99988866.xyz"        # 高可用
-            "https://github.moeyy.cn"            # 国内CDN
-            "https://git.xiaozhuo.me"            # 稳定
-            "https://gh.ddlc.top"                # 备用
-            "https://github.000060000.xyz"       # 备用
-            "https://hub.gitmirror.com"          # 官方镜像
-            "https://ghproxy.net"                # 备用
-            "https://raw.gitmirror.com"          # 备用
+            "https://mirror.ghproxy.com"          
+            "https://gh-proxy.com"               
+            "https://gh.api.99988866.xyz"        
+            "https://github.moeyy.cn"            
+            "https://git.xiaozhuo.me"            
         )
         check_url="https://raw.githubusercontent.com/NapNeko/NapCatQQ/main/package.json"
     elif [ "${parm1}" == "Docker" ]; then
         proxy_arr=(
-            "https://dockerproxy.com"            # 主代理
-            "https://docker.m.daocloud.io"       # DaoCloud
-            "https://mirror.baidubce.com"        # 百度
-            "https://hub-mirror.c.163.com"       # 网易
-            "https://mirror.ccs.tencentyun.com"  # 腾讯
-            "https://docker.1ms.run"             # 备用
-            "https://docker.xuanyuan.me"         # 备用
+            "https://dockerproxy.com"            
+            "https://docker.m.daocloud.io"       
+            "https://mirror.baidubce.com"        
+            "https://hub-mirror.c.163.com"       
         )
         check_url=""
     else
@@ -170,8 +162,6 @@ function network_test() {
             "https://mirror.ghproxy.com"
             "https://gh-proxy.com"
             "https://gh.api.99988866.xyz"
-            "https://github.moeyy.cn"
-            "https://git.xiaozhuo.me"
         )
         check_url="https://raw.githubusercontent.com/NapNeko/NapCatQQ/main/package.json"
     fi
@@ -184,7 +174,7 @@ function network_test() {
         log "代理已关闭, 尝试直连 ${parm1}..."
         target_proxy=""
         if [ -n "${check_url}" ]; then
-            # 增加重试机制 + 修复curl参数错误（核心：%{exitcode}）
+            # 核心修复：curl -w "%{http_code}:%{exitcode}" （添加%{}）
             status_and_exit_code=$(curl -k --connect-timeout ${timeout} --max-time $((timeout * 2)) --retry 2 -o /dev/null -s -w "%{http_code}:%{exitcode}" "${check_url}")
             status=$(echo "${status_and_exit_code}" | cut -d: -f1)
             curl_exit_code=$(echo "${status_and_exit_code}" | cut -d: -f2)
@@ -202,7 +192,7 @@ function network_test() {
         # 先测试直连
         if [ -n "${check_url}" ]; then
             log "测速: 直连..."
-            # 修复curl参数错误：%{speed_download} 而非 speed_download
+            # 核心修复：curl -w "%{http_code}:%{exitcode}:%{speed_download}"
             local curl_output
             curl_output=$(curl -k -L --connect-timeout ${timeout} --max-time $((timeout * 3)) --retry 1 -o /dev/null -s -w "%{http_code}:%{exitcode}:%{speed_download}" "${check_url}")
             local status=$(echo "${curl_output}" | cut -d: -f1)
@@ -218,7 +208,7 @@ function network_test() {
             fi
         fi
 
-        # 测试代理（并行测速优化）
+        # 测试代理（并行测速）
         local proxy_speeds=()
         for proxy_candidate in "${proxy_arr[@]}"; do
             local test_target_url
@@ -228,9 +218,9 @@ function network_test() {
                 test_target_url="${proxy_candidate}/"
             fi
 
-            # 后台测速，避免串行耗时
+            # 后台测速
             (
-                # 修复curl参数错误：%{xxx} 格式
+                # 核心修复：curl -w "%{http_code}:%{exitcode}:%{speed_download}"
                 local curl_output=$(curl -k -L --connect-timeout ${timeout} --max-time $((timeout * 3)) --retry 1 -o /dev/null -s -w "%{http_code}:%{exitcode}:%{speed_download}" "${test_target_url}")
                 local status=$(echo "${curl_output}" | cut -d: -f1)
                 local curl_exit_code=$(echo "${curl_output}" | cut -d: -f2)
@@ -275,10 +265,9 @@ function network_test() {
     fi
 }
 
-# 优化速度格式化（兼容小数）
+# 速度格式化
 function format_speed() {
     local speed_bps=$1
-    # 处理空值/非数字
     if ! [[ "${speed_bps}" =~ ^[0-9]+$ ]]; then
         echo "0 B/s"
         return
@@ -295,11 +284,10 @@ function format_speed() {
     fi
 }
 
-# ======================== Root权限选择（核心新增）========================
+# ======================== Root权限选择 ========================
 function choose_root_permission() {
     log "===== 权限选择 ====="
     if [[ $EUID -eq 0 ]]; then
-        # 当前已是root用户，询问是否确认用root安装
         log "警告: 当前以ROOT用户运行，使用root安装可能导致权限问题！"
         read -p "是否确认使用ROOT权限安装? (y/N): " confirm_root
         if [[ "${confirm_root}" =~ ^[Yy]$ ]]; then
@@ -310,15 +298,12 @@ function choose_root_permission() {
             exit 1
         fi
     else
-        # 当前是普通用户，询问是否要切换到root安装
         read -p "是否要切换到ROOT权限安装? (N/y): " switch_root
         if [[ "${switch_root}" =~ ^[Yy]$ ]]; then
-            # 检查sudo是否可用
             if ! command -v sudo &>/dev/null; then
                 log "错误: 系统未安装sudo，无法切换root权限！"
                 exit 1
             fi
-            # 重新以root执行脚本
             log "将切换到ROOT权限重新执行脚本..."
             exec sudo bash "${0}" "$@"
         else
@@ -328,7 +313,7 @@ function choose_root_permission() {
     fi
 }
 
-# ======================== 原有函数优化（兼容Root）========================
+# ======================== 依赖检查与安装 ========================
 function check_sudo() {
     if ! command -v sudo &>/dev/null; then
         log "sudo不存在, 尝试自动安装..."
@@ -354,11 +339,11 @@ function detect_package_manager() {
         package_manager="dnf"
         package_installer="rpm"
         dnf_is_el_or_fedora
-    elif command -v yum &>/dev/null; then  # 兼容 CentOS 7
+    elif command -v yum &>/dev/null; then
         package_manager="yum"
         package_installer="rpm"
         dnf_host="el"
-    elif command -v brew &>/dev/null; then # 兼容 macOS
+    elif command -v brew &>/dev/null; then
         package_manager="brew"
         package_installer="brew"
     else
@@ -368,7 +353,6 @@ function detect_package_manager() {
     log "当前包管理器: ${package_manager}, 安装器: ${package_installer}"
 }
 
-# 修复 whiptail 检查（兼容更多终端）
 function check_whiptail() {
     local term_type="${TERM:-xterm}"
     if [[ "${term_type}" != "xterm" && "${term_type}" != "xterm-256color" && "${term_type}" != "screen" && "${term_type}" != "screen-256color" ]]; then
@@ -393,7 +377,6 @@ function check_whiptail() {
     fi
 }
 
-# 优化依赖安装（兼容更多系统）
 function install_dependency() {
     log "开始安装系统依赖..."
     detect_package_manager
@@ -444,7 +427,7 @@ function install_dependency() {
     log "依赖安装完成"
 }
 
-# 移除原有的root检查限制（核心修改）
+# 移除root安装限制
 function check_root_for_shell_install() {
     if [[ $EUID -eq 0 && "${allow_root_install}" != "y" ]]; then
         log "警告: 不推荐使用root权限执行Shell安装"
@@ -533,7 +516,6 @@ function enable_dnf_repos_and_cache() {
 
 function uninstall_old_version() {
     log "检查旧版本安装..."
-    # 兼容root/普通用户的旧版本路径
     local old_paths=(
         "/opt/QQ"
         "${HOME}/Napcat/opt/QQ"
@@ -564,7 +546,6 @@ function uninstall_old_version() {
             execute_command "sudo ${package_manager} remove -y linuxqq" "卸载旧版 linuxqq" true
         fi
 
-        # 删除所有旧路径
         for path in "${old_paths[@]}"; do
             if [ -d "${path}" ]; then
                 execute_command "sudo rm -rf ${path}" "清理旧版QQ目录: ${path}" true
@@ -577,19 +558,16 @@ function uninstall_old_version() {
 }
 
 function create_tmp_folder() {
-    # 兼容root/普通用户的临时目录权限
     local tmp_dir="./NapCat"
     if [ -d "${tmp_dir}" ] && [ "$(ls -A ${tmp_dir})" ]; then
         log "文件夹 ${tmp_dir} 已存在且不为空，请重命名后重试"
         exit 1
     fi
     mkdir -p "${tmp_dir}"
-    # 确保当前用户有写入权限
     chmod 755 "${tmp_dir}"
 }
 
 function clean() {
-    # 兼容root/普通用户的清理操作
     rm -rf ./NapCat || log "临时目录删除失败, 请手动删除 ./NapCat"
     rm -rf ./NapCat.Shell.zip || log "压缩包删除失败, 请手动删除"
     rm -f ./QQ.deb ./QQ.rpm
@@ -791,12 +769,11 @@ function update_linuxqq_config() {
     log "更新QQ配置..."
     local target_ver="${1}"
     local build_id="${target_ver##*-}"
-    # 兼容root/普通用户的配置路径
     local user_config_dir
     if [[ $EUID -eq 0 ]]; then
-        user_config_dir="/root/.config/QQ/versions"  # root用户配置路径
+        user_config_dir="/root/.config/QQ/versions"
     else
-        user_config_dir="${HOME}/.config/QQ/versions"  # 普通用户配置路径
+        user_config_dir="${HOME}/.config/QQ/versions"
     fi
     local user_config_file="${user_config_dir}/config.json"
 
@@ -833,7 +810,6 @@ function install_napcat() {
     }
     log "移动文件成功"
 
-    # 兼容root/普通用户的权限设置
     if [[ $EUID -eq 0 ]]; then
         chmod -R 755 "${TARGET_FOLDER}/napcat/"
     else
@@ -1063,9 +1039,9 @@ function show_main_info() {
     log ""
     log "${GREEN}启动 Napcat:${NC}"
     if [[ $EUID -eq 0 ]]; then
-        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"  # root用户启动命令
+        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"
     else
-        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"  # 普通用户启动命令
+        log "  ${CYAN}xvfb-run -a ${QQ_EXECUTABLE} --no-sandbox ${NC}"
     fi
     log ""
     log "${GREEN}后台运行:${NC}"
@@ -1220,10 +1196,10 @@ done
 clear
 logo
 print_introduction
-check_system_compatibility  # 系统兼容检查
+check_system_compatibility
 check_sudo
 
-# 核心新增：权限选择
+# 权限选择
 choose_root_permission
 
 if [ "${use_tui}" = "y" ]; then
@@ -1272,7 +1248,7 @@ if [ "${use_docker}" = "y" ]; then
     fi
     exit ${exit_status}
 elif [ "${use_docker}" = "n" ]; then
-    check_root_for_shell_install  # 已修改为兼容root
+    check_root_for_shell_install
     log "开始 Shell 安装..."
     uninstall_old_version
     install_dependency
