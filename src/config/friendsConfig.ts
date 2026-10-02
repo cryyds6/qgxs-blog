@@ -241,6 +241,16 @@ export const friendsConfig: FriendLink[] = [
 		weight: 5,
 		enabled: true,
 	},
+	{
+		title: "LonelyBingの小窝",
+		imgurl:
+			"https://img.lonelybing.top/file/%E5%A4%B4%E5%83%8F/1789400498937.jpg",
+		desc: "一名普普通通の大学生~",
+		siteurl: "https://lonelybing.top/",
+		tags: ["Blog"],
+		weight: 5,
+		enabled: true,
+	},
 ];
 
 // 获取启用的友链并进行排序
